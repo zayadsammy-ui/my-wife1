@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ذكرياتنا 📸</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav>
+<a href="index.html">🏠</a>
+<a href="memories.html">📸</a>
+<a href="surprise.html">🎁</a>
+</nav>
+
+<h2>ذكرياتنا ❤️</h2>
+
+<input type="file" id="file"><br><br>
+<input type="text" id="text" placeholder="اكتب ذكرى ❤️"><br><br>
+<button onclick="addMemory()">إضافة</button>
+
+<div id="gallery"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
+import { getDatabase, ref as dbRef, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const firebaseConfig = {
+  // 👈 حط بياناتك هنا
+};
+
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+const db = getDatabase(app);
+
+// ➤ إضافة صورة + ذكرى
+window.addMemory = async () => {
+    const file = document.getElementById("file").files[0];
+    const text = document.getElementById("text").value;
+
+    let imageUrl = "";
+
+    if(file){
+        const storageRef = ref(storage, 'images/' + file.name);
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
+    }
+
+    push(dbRef(db,"memories"),{
+        text:text,
+        image:imageUrl
+    });
+};
+
+// ➤ عرض الذكريات
+onValue(dbRef(db,"memories"),(snapshot)=>{
+    document.getElementById("gallery").innerHTML="";
+
+    snapshot.forEach((item)=>{
+        let data = item.val();
+
+        document.getElementById("gallery").innerHTML += `
+        <div class="card">
+            <p>${data.text}</p>
+            ${data.image ? `<img src="${data.image}">` : ""}
+        </div>
+        `;
+    });
+});
+</script>
+
+</body>
+</html>
