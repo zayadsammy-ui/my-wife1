@@ -24,52 +24,72 @@
 <div id="gallery"></div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
 import { getDatabase, ref as dbRef, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
+/* 🔥 Firebase Config (حطها هنا مرة واحدة بس) */
 const firebaseConfig = {
-  // 👈 حط بياناتك هنا
+  apiKey: "AIzaSyAyRvD-YkOILYvqEkaYQFW7khuGpGL1tBs",
+  authDomain: "somaya-love.firebaseapp.com",
+  projectId: "somaya-love",
+  storageBucket: "somaya-love.appspot.com",
+  messagingSenderId: "100003980502",
+  appId: "1:100003980502:web:7a63028e8d2f032f855577"
 };
 
+/* Initialize */
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 const db = getDatabase(app);
 
-// ➤ إضافة صورة + ذكرى
+/* ➤ إضافة ذكرى + صورة */
 window.addMemory = async () => {
+
     const file = document.getElementById("file").files[0];
     const text = document.getElementById("text").value;
 
     let imageUrl = "";
 
     if(file){
-        const storageRef = ref(storage, 'images/' + file.name);
+        const storageRef = ref(storage, 'images/' + Date.now() + file.name);
         await uploadBytes(storageRef, file);
         imageUrl = await getDownloadURL(storageRef);
     }
 
+    // حفظ في الداتابيز
     push(dbRef(db,"memories"),{
         text:text,
         image:imageUrl
     });
+
 };
 
-// ➤ عرض الذكريات
+/* ➤ عرض مباشر (Realtime) */
 onValue(dbRef(db,"memories"),(snapshot)=>{
-    document.getElementById("gallery").innerHTML="";
+
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
 
     snapshot.forEach((item)=>{
+
         let data = item.val();
 
-        document.getElementById("gallery").innerHTML += `
-        <div class="card">
-            <p>${data.text}</p>
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+            <p>${data.text || ""}</p>
             ${data.image ? `<img src="${data.image}">` : ""}
-        </div>
         `;
+
+        gallery.prepend(card); // يظهر فورًا فوق
+
     });
+
 });
+
 </script>
 
 </body>
